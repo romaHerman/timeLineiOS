@@ -8,13 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-@interface TimiLineViewControl : UIView {
+@interface TimeLineViewControl : UIView {
     CGFloat viewheight;
 }
 
 @property(nonatomic, assign) CGFloat viewheight;
 
 - (id)initWithTimeArray:(NSArray *)time andTimeDescriptionArray:(NSArray *)timeDescriptions andCurrentStatus:(int)status;
-- (void)showProgress:(BOOL)animated;
 
 @end

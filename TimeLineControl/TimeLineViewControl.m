@@ -6,13 +6,22 @@
 //  Copyright (c) 2014 908 Inc. All rights reserved.
 //
 
-#import "TimiLineViewControl.h"
-#import <Masonry/Masonry.h>
-#import <Masonry/MASViewAttribute.h>
-#import "K9Appearance.h"
+#define MAS_SHORTHAND
+#define MAS_SHORTHAND_GLOBALS
+
+#import "TimeLineViewControl.h"
+#import "Masonry.h"
+#import "MASViewAttribute.h"
 #import <QuartzCore/QuartzCore.h>
 
-@interface TimiLineViewControl () {
+const float BETTWEEN_LABEL_OFFSET = 20;
+const float LINE_WIDTH = 2.0;
+const float CIRCLE_RADIUS = 3.0;
+const float INITIAL_PROGRESS_CONTAINER_WIDTH = 20.0;
+const float PROGRESS_VIEW_CONTAINER_LEFT = 51.0;
+const float VIEW_WIDTH = 225.0;
+
+@interface TimeLineViewControl () {
     BOOL didStopAnimation;
     NSMutableArray *layers;
     NSMutableArray *circleLayers;
@@ -28,10 +37,10 @@
 @property(nonatomic, strong) UIView *progressDescriptionViewContainer;
 
 @property(nonatomic, strong) NSMutableArray *labelDscriptionsArray;
-
+@property(nonatomic, strong) NSMutableArray *sizes;
 @end
 
-@implementation TimiLineViewControl
+@implementation TimeLineViewControl
 
 @synthesize viewheight = viewheight;
 
@@ -51,11 +60,18 @@
     return _labelDscriptionsArray;
 }
 
+- (NSMutableArray *)sizes {
+    if (!_sizes) {
+        _sizes = [[NSMutableArray alloc] init];
+    }
+    return _sizes;
+}
+
 - (id)initWithTimeArray:(NSArray *)time andTimeDescriptionArray:(NSArray *)timeDescriptions andCurrentStatus:(int)status {
-    self = [super initWithFrame:CGRectMake(24, 0, 225, 75)];
+    self = [super initWithFrame:CGRectMake(24, 0, VIEW_WIDTH, 75)];
     if (self) {
         viewheight = 75.0;
-        
+        leftWidth = VIEW_WIDTH - (PROGRESS_VIEW_CONTAINER_LEFT + INITIAL_PROGRESS_CONTAINER_WIDTH + CIRCLE_RADIUS * 2);
         self.progressViewContainer = [[UIView alloc] init ];
         self.timeViewContainer = [[UIView alloc] init ];
         self.progressDescriptionViewContainer = [[UIView alloc] init];
@@ -63,7 +79,6 @@
         [self addSubview:self.progressViewContainer];
         [self addSubview:self.timeViewContainer];
         [self addSubview:self.progressDescriptionViewContainer];
-  
  //uncomment to see color view's borders
  /*
         self.timeViewContainer.layer.borderColor = UIColor.blackColor.CGColor;
@@ -72,12 +87,13 @@
         self.progressDescriptionViewContainer.layer.borderWidth = 1;
         self.progressViewContainer.layer.borderColor = UIColor.greenColor.CGColor;
         self.progressViewContainer.layer.borderWidth = 1;
- */
+*/
         [self addTimeDescriptionLabels:timeDescriptions andTime:time currentStatus:status];
+        [self setNeedsUpdateConstraints];
         [self addProgressBasedOnLabels:self.labelDscriptionsArray currentStatus:status];
         [self addTimeLabels:time currentStatus:status];
   
-        [self setNeedsUpdateConstraints];
+        
     }
     
     return self;
@@ -100,15 +116,14 @@
         
         UILabel *descrLabel = self.labelDscriptionsArray[i];
         [label makeConstraints:^(MASConstraintMaker *make) {
-            make.height.equalTo(@(15));
+            make.height.equalTo(@(16));
             make.left.equalTo(_timeViewContainer);
-            //make.width.equalTo(_timeViewContainer);
+            make.width.equalTo(_timeViewContainer);
             make.top.equalTo(descrLabel.top);//.with.offset(betweenLabelOffset + 1);
         }];
         CGSize fittingSize = [label systemLayoutSizeFittingSize: UILayoutFittingCompressedSize];
-        leftWidth = fittingSize.width;
-        betweenLabelOffset = 20;
-        totlaHeight += (label.frame.size.height + betweenLabelOffset);
+        betweenLabelOffset = BETTWEEN_LABEL_OFFSET;
+        totlaHeight += (fittingSize.height + betweenLabelOffset);
         
         [self.labelDscriptionsArray addObject:label];
         i++;
@@ -125,14 +140,14 @@
 - (void)addTimeDescriptionLabels:(NSArray *)timeDescriptions andTime:(NSArray *)time currentStatus:(int)currentStatus {
     CGFloat betweenLabelOffset = 0;
     CGFloat totlaHeight = 6;
+    CGSize fittingSizeLabel;
     UILabel *lastLabel = [[UILabel alloc] initWithFrame:_progressDescriptionViewContainer.frame];
     [_progressDescriptionViewContainer addSubview:lastLabel];
     int i = 0;
-    
     for (NSString *timeDescription in timeDescriptions) {
         UILabel *label = [[UILabel alloc] init];
         [label setText:timeDescription];
-        label.numberOfLines = 2;
+        label.numberOfLines = 0;
         label.textColor = i < currentStatus ? [UIColor blackColor] : [UIColor grayColor];
         label.textAlignment = NSTextAlignmentLeft;
         label.lineBreakMode = NSLineBreakByWordWrapping;
@@ -142,17 +157,20 @@
             make.left.equalTo(_progressDescriptionViewContainer).with.offset(7);
             make.width.equalTo(_progressDescriptionViewContainer);
             make.top.equalTo(lastLabel.bottom).with.offset(betweenLabelOffset);
+            make.height.greaterThanOrEqualTo(@(16));
         }];
+        CGSize fittingSizeLabel = [self.progressDescriptionViewContainer systemLayoutSizeFittingSize: UILayoutFittingCompressedSize];
+        [label setPreferredMaxLayoutWidth:leftWidth];
         [label sizeToFit];
-        betweenLabelOffset = 20;
-        totlaHeight += (label.frame.size.height + betweenLabelOffset);
+        betweenLabelOffset = BETTWEEN_LABEL_OFFSET;
+        totlaHeight += (fittingSizeLabel.height + betweenLabelOffset);
         lastLabel = label;
         
         [self.labelDscriptionsArray addObject:label];
         i++;
     }
     
-    viewheight = totlaHeight;
+    viewheight = fittingSizeLabel.height;
     
     // tell constraints they need updating
     [self setNeedsUpdateConstraints];
@@ -174,13 +192,13 @@
 
     for (UILabel *label in labels) {
         //configure circle
+        
         CGSize fittingSize = [label systemLayoutSizeFittingSize: UILayoutFittingCompressedSize];
-        strokeColor = i < currentStatus ? [K9Appearance orangeColorWithAlpha:1.0] : [UIColor lightGrayColor];
+        strokeColor = i < currentStatus ? [UIColor redColor] : [UIColor lightGrayColor];
         yCenter = (totlaHeight /*+ fittingSize.height/2*/);
         
         UIBezierPath *circle = [UIBezierPath bezierPath];
         [self configureBezierCircle:circle withCenterY:yCenter];
-        
         CAShapeLayer *circleLayer = [self getLayerWithCircle:circle andStrokeColor:strokeColor];
         [circleLayers addObject:circleLayer];
         //add static background gray circle
@@ -189,8 +207,8 @@
         //configure line
         if (i > 0) {
             fromPoint = lastpoint;
-            toPoint = CGPointMake(lastpoint.x, yCenter - 3.0);
-            lastpoint = CGPointMake(lastpoint.x, yCenter + 3.0);
+            toPoint = CGPointMake(lastpoint.x, yCenter - CIRCLE_RADIUS);
+            lastpoint = CGPointMake(lastpoint.x, yCenter + CIRCLE_RADIUS);
             
             UIBezierPath *line = [self getLineWithStartPoint:fromPoint endPoint:toPoint];
             CAShapeLayer *lineLayer = [self getLayerWithLine:line andStrokeColor:strokeColor];
@@ -199,10 +217,10 @@
             CAShapeLayer *grayStaticLineLayer = [self getLayerWithLine:line andStrokeColor:[UIColor lightGrayColor]];
             [self.progressViewContainer.layer addSublayer:grayStaticLineLayer];
         } else {
-            lastpoint = CGPointMake(self.progressViewContainer.center.x + 3.5, yCenter + 3);
+            lastpoint = CGPointMake(self.progressViewContainer.center.x + CIRCLE_RADIUS + INITIAL_PROGRESS_CONTAINER_WIDTH / 2, yCenter + CIRCLE_RADIUS);
         }
         
-        betweenLineOffset = 20;
+        betweenLineOffset = BETTWEEN_LABEL_OFFSET;
         totlaHeight += (fittingSize.height + betweenLineOffset);
         i++;
     }
@@ -215,7 +233,7 @@
     lineLayer.path = line.CGPath;
     lineLayer.strokeColor = strokeColor.CGColor;
     lineLayer.fillColor = nil;
-    lineLayer.lineWidth = 2.0f;
+    lineLayer.lineWidth = LINE_WIDTH;
     
     return lineLayer;
 }
@@ -235,20 +253,20 @@
     
     circleLayer.strokeColor = strokeColor.CGColor;
     circleLayer.fillColor = nil;
-    circleLayer.lineWidth = 2.0f;
+    circleLayer.lineWidth = LINE_WIDTH;
     circleLayer.lineJoin = kCALineJoinBevel;
 
     return circleLayer;
 }
 
 - (void)configureBezierCircle:(UIBezierPath *)circle withCenterY:(CGFloat)centerY {
-    [circle addArcWithCenter:CGPointMake(self.progressViewContainer.center.x + 3.5, centerY)
-                      radius:3
+    [circle addArcWithCenter:CGPointMake(self.progressViewContainer.center.x + CIRCLE_RADIUS + INITIAL_PROGRESS_CONTAINER_WIDTH / 2, centerY)
+                      radius:CIRCLE_RADIUS
                   startAngle:M_PI_2
                     endAngle:-M_PI_2
                    clockwise:YES];
-    [circle addArcWithCenter:CGPointMake(self.progressViewContainer.center.x + 3.5, centerY)
-                      radius:3
+    [circle addArcWithCenter:CGPointMake(self.progressViewContainer.center.x + CIRCLE_RADIUS + + INITIAL_PROGRESS_CONTAINER_WIDTH / 2, centerY)
+                      radius:CIRCLE_RADIUS
                   startAngle:-M_PI_2
                     endAngle:M_PI_2
                    clockwise:YES];
@@ -258,7 +276,7 @@
     float circleTimeOffset = 1;
     circleCounter = 0;
     int i = 1;
-    DLog(@"CUR ST = %i layer to anim = %i", currentStatus, layersToAnimate.count);
+    //NSLog(@"CUR ST = %i layer to anim = %lu", currentStatus, (unsigned long)layersToAnimate.count);
     if (currentStatus == layersToAnimate.count) {
         //add without animation
         for (CAShapeLayer *cilrclLayer in layersToAnimate) {
@@ -284,8 +302,8 @@
             [cilrclLayer addAnimation:animation forKey:@"strokeCircleAnimation"];
             if (i == currentStatus && i != [layersToAnimate count]) {
                 CABasicAnimation *strokeAnim = [CABasicAnimation animationWithKeyPath:@"strokeColor"];
-                strokeAnim.fromValue         = (id) [K9Appearance orangeColorWithAlpha:1.0].CGColor;
-                strokeAnim.toValue           = (id) [K9Appearance orangeColorWithAlpha:0.0].CGColor;
+                strokeAnim.fromValue         = (id) [UIColor redColor].CGColor;
+                strokeAnim.toValue           = (id) [UIColor clearColor].CGColor;
                 strokeAnim.duration          = 1.0;
                 strokeAnim.repeatCount       = HUGE_VAL;
                 strokeAnim.autoreverses      = NO;
@@ -299,13 +317,11 @@
 }
 
 - (void)animationDidStart:(CAAnimation *)anim {
-    
     if (circleCounter < circleLayers.count) {
-    if (anim == [circleLayers[circleCounter] animationForKey:@"strokeCircleAnimation"]) {
-        DLog(@"DID SATRT CIRCLE");
-        [circleLayers[circleCounter] setHidden:NO];
-        circleCounter++;
-    }
+        if (anim == [circleLayers[circleCounter] animationForKey:@"strokeCircleAnimation"]) {
+            [circleLayers[circleCounter] setHidden:NO];
+            circleCounter++;
+        }
     }
 }
 
@@ -330,27 +346,20 @@
 
 - (void)updateConstraints {
     [self.progressViewContainer updateConstraints:^(MASConstraintMaker *make) {
-        make.width.equalTo(11);
+        make.width.equalTo(@(CIRCLE_RADIUS + INITIAL_PROGRESS_CONTAINER_WIDTH));
         make.height.equalTo(viewheight);
-      //  make.centerX.equalTo(self);
         make.top.equalTo(self);
-        make.left.equalTo(_timeViewContainer.right).with.offset(@(10));
+        make.left.equalTo(@(PROGRESS_VIEW_CONTAINER_LEFT));
     }];
     [self.timeViewContainer updateConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(self);
-        //make.right.equalTo(_progressViewContainer).with.offset(-11);
+        make.right.equalTo(_progressViewContainer.left);
         make.top.equalTo(self);
         make.height.equalTo(viewheight);
-        if (leftWidth) {
-            make.width.equalTo(leftWidth);
-        } else {
-            make.width.equalTo(@(80));
-        }
-        
     }];
     [self.progressDescriptionViewContainer updateConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(self);
-        make.left.equalTo(_progressViewContainer).with.offset(10);
+        make.left.equalTo(_progressViewContainer.right).with.offset(0);
         make.top.equalTo(self);
         make.height.equalTo(viewheight);
     }];
