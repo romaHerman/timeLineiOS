@@ -30,6 +30,8 @@ const float VIEW_WIDTH = 225.0;
     CGFloat timeOffset;
     CGFloat leftWidth;
     CGFloat rightWidth;
+    
+    CGFloat viewWidth;
 }
 
 @property(nonatomic, strong) UIView *progressViewContainer;
@@ -67,11 +69,11 @@ const float VIEW_WIDTH = 225.0;
     return _sizes;
 }
 
-- (id)initWithTimeArray:(NSArray *)time andTimeDescriptionArray:(NSArray *)timeDescriptions andCurrentStatus:(int)status {
-    self = [super initWithFrame:CGRectMake(24, 0, VIEW_WIDTH, 75)];
+- (id)initWithTimeArray:(NSArray *)time andTimeDescriptionArray:(NSArray *)timeDescriptions andCurrentStatus:(int)status andFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
     if (self) {
         viewheight = 75.0;
-        leftWidth = VIEW_WIDTH - (PROGRESS_VIEW_CONTAINER_LEFT + INITIAL_PROGRESS_CONTAINER_WIDTH + CIRCLE_RADIUS * 2);
+        leftWidth = frame.size.width - (PROGRESS_VIEW_CONTAINER_LEFT + INITIAL_PROGRESS_CONTAINER_WIDTH + CIRCLE_RADIUS * 2);
         self.progressViewContainer = [[UIView alloc] init ];
         self.timeViewContainer = [[UIView alloc] init ];
         self.progressDescriptionViewContainer = [[UIView alloc] init];
@@ -79,20 +81,20 @@ const float VIEW_WIDTH = 225.0;
         [self addSubview:self.progressViewContainer];
         [self addSubview:self.timeViewContainer];
         [self addSubview:self.progressDescriptionViewContainer];
- //uncomment to see color view's borders
- /*
-        self.timeViewContainer.layer.borderColor = UIColor.blackColor.CGColor;
-        self.timeViewContainer.layer.borderWidth = 1;
-        self.progressDescriptionViewContainer.layer.borderColor = UIColor.redColor.CGColor;
-        self.progressDescriptionViewContainer.layer.borderWidth = 1;
-        self.progressViewContainer.layer.borderColor = UIColor.greenColor.CGColor;
-        self.progressViewContainer.layer.borderWidth = 1;
-*/
+        //uncomment to see color view's borders
+        /*
+         self.timeViewContainer.layer.borderColor = UIColor.blackColor.CGColor;
+         self.timeViewContainer.layer.borderWidth = 1;
+         self.progressDescriptionViewContainer.layer.borderColor = UIColor.redColor.CGColor;
+         self.progressDescriptionViewContainer.layer.borderWidth = 1;
+         self.progressViewContainer.layer.borderColor = UIColor.greenColor.CGColor;
+         self.progressViewContainer.layer.borderWidth = 1;
+         */
         [self addTimeDescriptionLabels:timeDescriptions andTime:time currentStatus:status];
         [self setNeedsUpdateConstraints];
         [self addProgressBasedOnLabels:self.labelDscriptionsArray currentStatus:status];
         [self addTimeLabels:time currentStatus:status];
-  
+        
         
     }
     
@@ -155,13 +157,14 @@ const float VIEW_WIDTH = 225.0;
         [self.progressDescriptionViewContainer addSubview:label];
         [label makeConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo(_progressDescriptionViewContainer).with.offset(7);
-            make.width.equalTo(_progressDescriptionViewContainer);
+            make.width.equalTo(leftWidth);
             make.top.equalTo(lastLabel.bottom).with.offset(betweenLabelOffset);
             make.height.greaterThanOrEqualTo(@(16));
         }];
-        CGSize fittingSizeLabel = [self.progressDescriptionViewContainer systemLayoutSizeFittingSize: UILayoutFittingCompressedSize];
+        
         [label setPreferredMaxLayoutWidth:leftWidth];
         [label sizeToFit];
+        CGSize fittingSizeLabel = [label systemLayoutSizeFittingSize: UILayoutFittingCompressedSize];
         betweenLabelOffset = BETTWEEN_LABEL_OFFSET;
         totlaHeight += (fittingSizeLabel.height + betweenLabelOffset);
         lastLabel = label;
@@ -189,12 +192,12 @@ const float VIEW_WIDTH = 225.0;
     CGPoint fromPoint;
     circleLayers = [[NSMutableArray alloc] init];
     layers = [[NSMutableArray alloc] init];
-
+    
     for (UILabel *label in labels) {
         //configure circle
         
         CGSize fittingSize = [label systemLayoutSizeFittingSize: UILayoutFittingCompressedSize];
-        strokeColor = i < currentStatus ? [UIColor redColor] : [UIColor lightGrayColor];
+        strokeColor = i < currentStatus ? [UIColor orangeColor] : [UIColor lightGrayColor];
         yCenter = (totlaHeight /*+ fittingSize.height/2*/);
         
         UIBezierPath *circle = [UIBezierPath bezierPath];
@@ -255,7 +258,7 @@ const float VIEW_WIDTH = 225.0;
     circleLayer.fillColor = nil;
     circleLayer.lineWidth = LINE_WIDTH;
     circleLayer.lineJoin = kCALineJoinBevel;
-
+    
     return circleLayer;
 }
 
@@ -283,7 +286,7 @@ const float VIEW_WIDTH = 225.0;
             [self.progressViewContainer.layer addSublayer:cilrclLayer];
         }
         for (CAShapeLayer *lineLayer in layers) {
-             [self.progressViewContainer.layer addSublayer:lineLayer];
+            [self.progressViewContainer.layer addSublayer:lineLayer];
         }
     } else {
         //add with animation
@@ -302,7 +305,7 @@ const float VIEW_WIDTH = 225.0;
             [cilrclLayer addAnimation:animation forKey:@"strokeCircleAnimation"];
             if (i == currentStatus && i != [layersToAnimate count]) {
                 CABasicAnimation *strokeAnim = [CABasicAnimation animationWithKeyPath:@"strokeColor"];
-                strokeAnim.fromValue         = (id) [UIColor redColor].CGColor;
+                strokeAnim.fromValue         = (id) [UIColor orangeColor].CGColor;
                 strokeAnim.toValue           = (id) [UIColor clearColor].CGColor;
                 strokeAnim.duration          = 1.0;
                 strokeAnim.repeatCount       = HUGE_VAL;
@@ -333,11 +336,11 @@ const float VIEW_WIDTH = 225.0;
     
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
     animation.duration = 0.200;
-
+    
     animation.fromValue = [NSNumber numberWithFloat:0.0f];
     animation.toValue   = [NSNumber numberWithFloat:1.0f];
     animation.fillMode = kCAFillModeForwards;
-
+    
     [self.progressViewContainer.layer addSublayer:lineLayer];
     [lineLayer addAnimation:animation forKey:@"strokeEndAnimation"];
     layerCounter++;
