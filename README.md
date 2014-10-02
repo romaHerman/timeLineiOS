@@ -1,7 +1,7 @@
 **TimeLine** control is a simple drop in solution to show progress of some event
 e.g. track order
 
-![](http://gifmaker.cc/PlayGIFAnimation.php?folder=2014100119uF6p4aRsvFngn7TK8L1Dcp&file=output_ppeLRI.gif)
+![](https://github.com/romaHerman/timeLineiOS/blob/master/output_ppeLRI.gif)
 
 To  use it in your application **follow this steps**:
 * drag TimeLineControl folder to project
