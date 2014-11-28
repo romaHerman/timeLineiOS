@@ -14,11 +14,11 @@
 		<string>https://github.com/romaHerman/timeLineiOS.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>Timlene.xcodeproj</string>
+	<string>0.0.1/ExampleProject/Timlene.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>0D2D8F826D5C9006CC4459CB2D303CBA2E5AC0AD</key>
-		<string>../..</string>
+		<string>../../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://github.com/romaHerman/timeLineiOS.git</string>
@@ -34,7 +34,7 @@
 			<key>IDESourceControlWCCIdentifierKey</key>
 			<string>0D2D8F826D5C9006CC4459CB2D303CBA2E5AC0AD</string>
 			<key>IDESourceControlWCCName</key>
-			<string>Timlene</string>
+			<string>timeLineiOS</string>
 		</dict>
 	</array>
 </dict>
