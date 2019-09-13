@@ -23,3 +23,6 @@ To deal with autoLayOut I've used [Masonry](https://github.com/Masonry/Masonry) 
 That is it! 
 
 You can check **ExampleProject** to see how timeline works
+
+
+Test actions1
